@@ -301,14 +301,27 @@ Parameters:
     Type: String
   DatabaseInstanceType:
     AllowedValues:
-      - db.r4.large
-      - db.r4.xlarge
-      - db.r4.2xlarge
-      - db.r4.4xlarge
-      - db.r4.8xlarge
-      - db.r4.16xlarge
+      # - db.r4.large
+      # - db.r4.xlarge
+      # - db.r4.2xlarge
+      # - db.r4.4xlarge
+      # - db.r4.8xlarge
+      # - db.r4.16xlarge
+      - db.r6g.large
+      - db.r6g.xlarge
+      - db.r6g.2xlarge
+      - db.r6g.4xlarge
+      - db.r6g.8xlarge
+      - db.r6g.12xlarge
+      - db.r6g.16xlarge
+      - db.r5.large
+      - db.r5.xlarge
+      - db.r5.2xlarge
+      - db.r5.4xlarge
+      - db.r5.8xlarge
+      - db.r5.16xlarge
     ConstraintDescription: Must be a valid RDS instance class.
-    Default: db.r4.large
+    Default: db.r5.large
     Description: The Amazon RDS database instance class.
     Type: String
   DatabaseMasterUsername:
@@ -865,7 +878,7 @@ Resources:
           !Ref DataSubnet4Cidr
         DataSubnet5Cidr:
           !Ref DataSubnet5Cidr
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/01-newvpc.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/01-newvpc.yaml
   securitygroups:
     DependsOn: vpc
     Type: AWS::CloudFormation::Stack
@@ -875,7 +888,7 @@ Resources:
           !Ref SshAccessCidr
         Vpc:
           !GetAtt [ vpc, Outputs.Vpc ]
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/02-securitygroups.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/02-securitygroups.yaml
   bastion:
     DependsOn: securitygroups
     Type: AWS::CloudFormation::Stack
@@ -891,7 +904,7 @@ Resources:
           !Ref NumberOfAZs
         Subnet:
           !GetAtt [ vpc, Outputs.PublicSubnet ]
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/03-bastion.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/03-bastion.yaml
   publicalb:
     DependsOn: securitygroups
     Type: AWS::CloudFormation::Stack
@@ -907,7 +920,7 @@ Resources:
           !GetAtt [ securitygroups, Outputs.PublicAlbSecurityGroup ]
         Vpc:
           !GetAtt [ vpc, Outputs.Vpc ]
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/03-publicalb.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/03-publicalb.yaml
   rds:
     DependsOn: [ securitygroups ]
     Type: AWS::CloudFormation::Stack
@@ -931,7 +944,7 @@ Resources:
           !GetAtt [ vpc, Outputs.DataSubnet ]
         NumberOfSubnets:
           !Ref NumberOfAZs
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/03-rds.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/03-rds.yaml
   efsfilesystem:
     DependsOn: securitygroups
     Type: AWS::CloudFormation::Stack
@@ -955,7 +968,7 @@ Resources:
           !Ref EfsPerformanceMode
         Subnet:
           !GetAtt [ vpc, Outputs.DataSubnet ]
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/03-efsfilesystem.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/03-efsfilesystem.yaml
   sessioncache:
     Condition: DeployWithSessionCache
     DependsOn: securitygroups
@@ -972,7 +985,7 @@ Resources:
           !GetAtt [ securitygroups, Outputs.ElastiCacheSecurityGroup ]
         NumberOfSubnets:
           !Ref NumberOfAZs
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/03-elasticache.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/03-elasticache.yaml
   applicationcache:
     Condition: DeployApplicationCache
     DependsOn: securitygroups
@@ -989,7 +1002,7 @@ Resources:
           !GetAtt [ securitygroups, Outputs.ElastiCacheSecurityGroup ]
         NumberOfSubnets:
           !Ref NumberOfAZs
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/03-elasticache.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/03-elasticache.yaml
   webnocache:
     DependsOn: [ publicalb, rds, efsfilesystem ]
     Condition: DeployWithoutSessionCache
@@ -1032,7 +1045,7 @@ Resources:
           !Ref MoodleLocale
         ElastiCacheClusterEndpointAddress:
           ''
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/04-web.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/04-web.yaml
   webcached:
     DependsOn: [ publicalb, rds, efsfilesystem, sessioncache ]
     Condition: DeployWithSessionCache
@@ -1075,7 +1088,7 @@ Resources:
           !Ref MoodleLocale
         ElastiCacheClusterEndpointAddress:
           !GetAtt sessioncache.Outputs.ElastiCacheClusterEndpointAddress
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/04-web.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/04-web.yaml
   cloudfront:
     Condition: DeployCloudFront
     DependsOn: publicalb    
@@ -1088,7 +1101,7 @@ Resources:
           !GetAtt [ publicalb, Outputs.PublicAlbDnsName ]
         DomainName:
           !Ref DomainName
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/04-cloudfront.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/04-cloudfront.yaml
   route53:
     Condition: DeployRoute53
     DependsOn: publicalb
@@ -1103,7 +1116,7 @@ Resources:
           !Ref HostedZoneName
         DomainName:
           !Ref DomainName
-      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/latest/templates/05-route53.yaml
+      TemplateURL: https://aws-refarch-moodle.s3.amazonaws.com/templates/05-route53.yaml
       
 Outputs:
   DnsName:
